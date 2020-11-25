@@ -6,17 +6,52 @@ router.get('/', function (req, res, next) {
   const battlesCollection = req.app.db.collection('Battles');
   battlesCollection.find().toArray()
     .then(result => {
-      res.send(result);
+      res.send(result.filter(val => val));
     })
     .catch(error => res.send(error));
 });
 
 /* GET battle places listing. */
-router.get('/list', function (req, res, next) {
+router.get('/locations', function (req, res, next) {
   const battlesCollection = req.app.db.collection('Battles');
   battlesCollection.distinct('location')
     .then(result => {
-      res.send(result);
+      res.send(result.filter(val => val));
+    })
+    .catch(error => res.send(error));
+});
+
+/* GET kings listing. */
+router.get('/kings', function (req, res, next) {
+  const battlesCollection = req.app.db.collection('Battles');
+  battlesCollection.aggregate(
+    [
+      {
+        "$group": {
+          "_id": null,
+          "attacker_king": { "$push": "$attacker_king" },
+          "defender_king": { "$push": "$defender_king" }
+        }
+      },
+      {
+        "$project": {
+          "_id": 0,
+          "Kings": { "$setUnion": ["$attacker_king", "$defender_king"] }
+        }
+      }
+    ]).toArray()
+    .then(result => {
+      res.send(result[0].Kings.filter(val => val));
+    })
+    .catch(error => res.send(error));
+});
+
+/* GET battle types listing. */
+router.get('/battle_types', function (req, res, next) {
+  const battlesCollection = req.app.db.collection('Battles');
+  battlesCollection.distinct('battle_type')
+    .then(result => {
+      res.send(result.filter(val => val));
     })
     .catch(error => res.send(error));
 });
@@ -70,7 +105,7 @@ router.get('/search', function (req, res, next) {
   }
   battlesCollection.find({ $and: search_parameters }).toArray()
     .then(result => {
-      res.send(result);
+      res.send(result.filter(val => val));
     }).catch(error => res.send(error));
 });
 
